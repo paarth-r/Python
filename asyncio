@@ -1,0 +1,45 @@
+import asyncio
+import random
+import time
+class Restaurant(object):
+    def __init__(self):
+        self.menu = {"pasta" : 4, "Pizza" : 5, "Roti" : 10}
+        pass
+    
+    async def cook(self, meal, time):
+        print(f"Getting {meal}")
+        await asyncio.sleep(time)
+        print(f"{meal} is ready")
+
+    async def print_status(self, name, dur):
+        n = 0
+        while not self.ready:
+                n += 1
+                print(f"{n} seconds have passed")
+                await asyncio.sleep(1)
+
+    async def cook_all(self, foodList):
+        await asyncio.gather(*[self.cook(food, self.menu[food]) for food in foodList])
+        self.ready = True
+                               
+    async def waiter(self):
+        timmy = 1000
+        food = ""
+        tl= []
+        self.ready = False
+        while food != "bus":
+            food = input("What would you like for an appetizer?")
+            if food  not in self.menu:
+                print(f"we don't serve {food} here")
+                continue
+
+            tl.append(food)
+            print(f"{food} will take {self.menu[food]} seconds to cook")
+        
+        await asyncio.gather(self.cook_all(tl), self.print_status("order", 0))
+
+        
+     
+r = Restaurant()
+asyncio.run(r.waiter())
+print("")
