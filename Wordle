@@ -1,0 +1,154 @@
+import sys
+import random
+
+
+#function to select random word
+def getrand():
+    return random.choice(list(open('wordlewords.txt')))
+    
+import pygame as pg
+
+#define colours
+WHITE = (255,255,255)
+GREEN = (0,255,0)
+GRAY = (128, 128, 128)
+YELLOW = (255, 255, 0)
+
+
+#initialise
+pg.init()
+screen = pg.display.set_mode((400, 600))
+COLOR_INACTIVE = pg.Color('lightskyblue3')
+COLOR_ACTIVE = pg.Color('dodgerblue2')
+FONT = pg.font.Font(None, 32)
+FONT2 = pg.font.Font(None, 64)
+def wordlecheck(correct, actual):
+    li = []
+    for n in range(len(actual)):
+        if actual[n] not in correct:
+            li.append('X')
+        elif actual[n] == correct[n]:
+            li.append('O')
+        elif actual[n] in correct:
+            li.append('_')
+    return li
+correctword = [n for n in getrand()]
+
+class Letter:
+    def __init__(self, x, y, L, char,) -> None:
+        self.rect = pg.Rect(x,y, L, L)
+        self.rect.center = (x,y)
+        self.char = char
+        self.colour = 0
+        self.colours = [GRAY, YELLOW, GREEN]
+        self.txt_surface = FONT2.render(char, True, (0,0,0))
+    def changecolour(self, colour):
+        self.colour = colour
+    def draw(self, screen):
+        # Blit the text.
+        screen.blit(self.txt_surface, self.rect.center)
+        self.txt_surface = FONT2.render(self.char, True, self.colours[self.colour])
+    
+
+lettrs = []
+
+class InputBox:
+
+    def __init__(self, x, y, w, h, text=''):
+        self.rect = pg.Rect(x, y, w, h)
+        self.color = COLOR_INACTIVE
+        self.text = text
+        self.txt_surface = FONT.render(text, True, self.color)
+        self.active = False
+        self.letters = 0
+        self.row = 0
+        self.tries = 0
+        self.haswon = False
+
+    def handle_event(self, event):
+        if event.type == pg.MOUSEBUTTONDOWN:
+            # If the user clicked on the input_box rect.
+            if self.rect.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            else:
+                self.active = False
+            # Change the current color of the input box.
+            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
+        if event.type == pg.KEYDOWN:
+            if self.active:
+                if event.key == pg.K_RETURN and self.letters > 4 and not self.haswon and self.tries < 6:
+                    print(wordlecheck(correctword, self.text))
+                    lcount = 0
+                    for n in wordlecheck(correctword, self.text):
+                        if n == "O":
+                            letter = Letter(120+(lcount*35), 100+(self.row*40), 26, self.text[lcount])
+                            letter.changecolour(2)
+                            lettrs.append(letter)
+                            lcount += 1
+                        if n == "X":
+                            letter = Letter(120+(lcount*35), 100+(self.row*40), 26, self.text[lcount])
+                            letter.changecolour(0)
+                            lettrs.append(letter)
+                            lcount += 1
+                        if n == "_":
+                            letter = Letter(120+(lcount*35), 100+(self.row*40), 26, self.text[lcount])
+                            letter.changecolour(1)
+                            lettrs.append(letter)
+                            lcount += 1
+                    self.row += 1
+                    self.tries += 1
+                    if wordlecheck(correctword, self.text) == ["O", "O", "O", "O", "O"]:
+                        self.haswon = True
+                    if self.tries >= 6 and wordlecheck(correctword, self.text) != ["O", "O", "O", "O", "O"]:
+                        print("IMAGINE LOSING WHAT A NERD","\n", ''.join(correctword))
+
+                        
+
+
+                    self.text = ''
+                    self.letters = 0
+
+                elif event.key == pg.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                    self.letters -= 1
+                elif self.letters <= 4:
+                    if event.unicode.upper() in "ABCDEFGHIJKLMNOPQRSTUVWXY":
+                        self.text += event.unicode
+                        self.letters += 1
+                # Re-render the text.
+                self.txt_surface = FONT.render(self.text, True, self.color)
+
+    def draw(self, screen):
+        # Blit the text.
+        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
+        # Blit the rect.
+        pg.draw.rect(screen, self.color, self.rect, 2)
+
+
+
+def main():
+    clock = pg.time.Clock()
+    input_box = InputBox(130, 500, 140, 32)
+
+    done = False
+
+    while not done:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                done = True
+            input_box.handle_event(event)
+
+        screen.fill((0, 0, 0))
+        
+        input_box.draw(screen)
+        for n in lettrs:
+            n.draw(screen)
+
+        pg.display.flip()
+        clock.tick(30)
+
+
+if __name__ == '__main__':
+    main()
+    pg.quit()
